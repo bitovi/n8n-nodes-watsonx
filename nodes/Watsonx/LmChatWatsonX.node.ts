@@ -22,6 +22,7 @@ export class LmChatWatsonX implements INodeType {
 		// eslint-disable-next-line n8n-nodes-base/node-class-description-inputs-wrong-regular-node
     inputs: [],
 		// eslint-disable-next-line n8n-nodes-base/node-class-description-outputs-wrong
+		// @ts-ignore
     outputs: ['ai_languageModel'],
     outputNames: ['Model'],
     credentials: [{ name: 'watsonxApi', required: true }],
