@@ -1,5 +1,3 @@
-// WatsonXApi.ts
-
 import { Icon, ICredentialType, INodeProperties } from 'n8n-workflow';
 
 export class WatsonXApi implements ICredentialType {
