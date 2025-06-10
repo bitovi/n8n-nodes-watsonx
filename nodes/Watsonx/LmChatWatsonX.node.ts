@@ -1,4 +1,4 @@
-import {type INodeType, type INodeTypeDescription, type ISupplyDataFunctions, type SupplyData} from 'n8n-workflow';
+import {NodeConnectionTypes, type INodeType, type INodeTypeDescription, type ISupplyDataFunctions, type SupplyData} from 'n8n-workflow';
 
 import { ChatWatsonx } from '@langchain/community/chat_models/ibm';
 interface IWatsonxOptions {
@@ -15,14 +15,14 @@ export class LmChatWatsonX implements INodeType {
     displayName: 'WatsonX LLM',
     name: 'lmChatWatsonX',
     icon: 'file:IBM_watsonx_logo.svg',
-    nodeType: 'languageModel',
     group: ['transform'],
     version: 1.0,
+		description: 'For advanced usage with an AI chain',
     defaults: { name: 'WatsonX LLM' },
 		// eslint-disable-next-line n8n-nodes-base/node-class-description-inputs-wrong-regular-node
     inputs: [],
 		// eslint-disable-next-line n8n-nodes-base/node-class-description-outputs-wrong
-    outputs: ['ai_languageModel'],
+    outputs: [NodeConnectionTypes.AiLanguageModel],
     outputNames: ['Model'],
     credentials: [{ name: 'watsonxApi', required: true }],
     properties: [
