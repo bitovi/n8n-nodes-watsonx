@@ -1,7 +1,7 @@
-// @ts-nocheck
 import {
   type INodeType,
   type INodeTypeDescription,
+  type IExecuteFunctions,
 } from 'n8n-workflow';
 
 import { ChatWatsonx } from '@langchain/community/chat_models/ibm';
@@ -10,13 +10,16 @@ export class LmChatWatsonX implements INodeType {
 
   description: INodeTypeDescription = {
     displayName: 'WatsonX LLM',
-    name: 'lmChatWatsonXJs',
+    name: 'lmChatWatsonX',
     icon: 'file:IBM_watsonx_logo.svg',
+		// @ts-ignore
     nodeType: 'languageModel',
     group: ['transform'],
     version: 1.0,
     defaults: { name: 'WatsonX LLM' },
+    // eslint-disable-next-line n8n-nodes-base/node-class-description-inputs-wrong-regular-node
     inputs: [],
+    // eslint-disable-next-line n8n-nodes-base/node-class-description-outputs-wrong
     outputs: ['ai_languageModel'],
     outputNames: ['Model'],
     credentials: [{ name: 'watsonxApi', required: true }],
@@ -39,8 +42,7 @@ export class LmChatWatsonX implements INodeType {
       },
     ],
   };
-
-  async supplyData(itemIndex: number) {
+  async supplyData(this: IExecuteFunctions, itemIndex: number) {
     const credentials = await this.getCredentials('watsonxApi', itemIndex);
 
     const modelId = this.getNodeParameter('modelId', itemIndex) as string;
@@ -58,7 +60,7 @@ export class LmChatWatsonX implements INodeType {
       props.watsonxAIApikey = credentials.ibmCloudApiKey;
       props.serviceUrl = `https://${region}.ml.cloud.ibm.com`;
     } else { //langchain auth for iam
-      const baseUrl = credentials.onPremiseUrl.replace(/\/$/, '');
+      const baseUrl = (credentials.onPremiseUrl as string).replace(/\/$/, '');
       const authUrl = `${baseUrl}/icp4d-api/v1/authorize`;
 
       const authResponse = await this.helpers.httpRequest({ //get bearer token via json http
