@@ -13,7 +13,7 @@ export class LmChatWatsonX implements INodeType {
 
 	description: INodeTypeDescription = {
     displayName: 'WatsonX LLM',
-    name: 'lmChatWatsonXJs',
+    name: 'lmChatWatsonX',
     icon: 'file:IBM_watsonx_logo.svg',
     nodeType: 'languageModel',
     group: ['transform'],
@@ -21,7 +21,7 @@ export class LmChatWatsonX implements INodeType {
     defaults: { name: 'WatsonX LLM' },
 		// eslint-disable-next-line n8n-nodes-base/node-class-description-inputs-wrong-regular-node
     inputs: [],
-		// @ts-ignore
+		// eslint-disable-next-line n8n-nodes-base/node-class-description-outputs-wrong
     outputs: ['ai_languageModel'],
     outputNames: ['Model'],
     credentials: [{ name: 'watsonxApi', required: true }],
@@ -48,60 +48,58 @@ export class LmChatWatsonX implements INodeType {
         default: {},
         description: "Additional options to control the model's behavior",
         options: [
-          {
-            displayName: 'Decoding Method',
-            name: 'decoding_method',
-            type: 'options',
-            default: 'sample',
-            options: [
-              { name: 'Greedy', value: 'greedy' },
-              { name: 'Sample', value: 'sample' },
-            ],
-            description:
-              'The method for decoding tokens. "greedy" is deterministic, "sample" introduces randomness.',
-          },
-          {
-            displayName: 'Sampling Temperature',
-            name: 'temperature',
-            type: 'number',
-            default: 0.7,
-            typeOptions: { minValue: 0, maxValue: 2, numberPrecision: 1 },
-            description:
-              'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
-          },
-          {
-            displayName: 'Maximum Number of Tokens',
-            name: 'maxNewTokens', // Use camelCase for the LangChain JS constructor
-            type: 'number',
-            default: 1024,
-            typeOptions: { minValue: 1 },
-            description: 'The maximum number of *new* tokens to generate in the completion',
-          },
-          {
-            displayName: 'Minimum Number of Tokens',
-            name: 'minNewTokens', // Use camelCase
-            type: 'number',
-            default: 1,
-            typeOptions: { minValue: 0 },
-            description: 'The minimum number of *new* tokens to generate in the completion',
-          },
-          {
-            displayName: 'Top K',
-            name: 'topK', // Use camelCase
-            type: 'number',
-            default: 50,
-            typeOptions: { minValue: 1, maxValue: 100 },
-            description: 'The number of highest probability vocabulary tokens to keep for top-k-filtering',
-          },
-          {
-            displayName: 'Top P',
-            name: 'topP', // Use camelCase
-            type: 'number',
-            default: 1,
-            typeOptions: { minValue: 0, maxValue: 1, numberPrecision: 1 },
-            description: 'Controls diversity via nucleus sampling: 0.5 means half of all likelihood-weighted options are considered',
-          },
-        ],
+  {
+    displayName: 'Decoding Method',
+    name: 'decoding_method',
+    type: 'options',
+    default: 'sample',
+    options: [
+      { name: 'Greedy', value: 'greedy' },
+      { name: 'Sample', value: 'sample' },
+    ],
+    description: 'The method for decoding tokens. "greedy" is deterministic, "sample" introduces randomness.',
+  },
+  {
+    displayName: 'Maximum Number of Tokens',
+    name: 'maxNewTokens',
+    type: 'number',
+    default: 1024,
+    typeOptions: { minValue: 1 },
+    description: 'The maximum number of *new* tokens to generate in the completion',
+  },
+  {
+    displayName: 'Minimum Number of Tokens',
+    name: 'minNewTokens',
+    type: 'number',
+    default: 1,
+    typeOptions: { minValue: 0 },
+    description: 'The minimum number of *new* tokens to generate in the completion',
+  },
+  {
+    displayName: 'Sampling Temperature',
+    name: 'temperature',
+    type: 'number',
+    default: 0.7,
+    typeOptions: { minValue: 0, maxValue: 2, numberPrecision: 1 },
+    description: 'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
+  },
+  {
+    displayName: 'Top K',
+    name: 'topK',
+    type: 'number',
+    default: 50,
+    typeOptions: { minValue: 1, maxValue: 100 },
+    description: 'The number of highest probability vocabulary tokens to keep for top-k-filtering',
+  },
+  {
+    displayName: 'Top P',
+    name: 'topP',
+    type: 'number',
+    default: 1,
+    typeOptions: { minValue: 0, maxValue: 1, numberPrecision: 1 },
+    description: 'Controls diversity via nucleus sampling: 0.5 means half of all likelihood-weighted options are considered',
+  },
+],
       },
     ],
   };
