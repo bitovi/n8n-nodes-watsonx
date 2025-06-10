@@ -1,10 +1,6 @@
 // WatsonXApi.ts
 
-import {
-	Icon,
-	ICredentialType,
-	INodeProperties,
-} from 'n8n-workflow';
+import { Icon, ICredentialType, INodeProperties } from 'n8n-workflow';
 
 export class WatsonXApi implements ICredentialType {
 	name = 'watsonxApi';
@@ -12,9 +8,7 @@ export class WatsonXApi implements ICredentialType {
 	documentationUrl = 'https://js.langchain.com/docs/integrations/llms/ibm';
 	icon: Icon = 'file:IBM_watsonx_logo.svg';
 
-
 	properties: INodeProperties[] = [
-
 		{
 			displayName: 'Environment Type',
 			name: 'environmentType',
@@ -88,7 +82,7 @@ export class WatsonXApi implements ICredentialType {
 			default: '',
 			required: true,
 			displayOptions: { show: { environmentType: ['cp4d'] } },
-			description: 'Your username-associated API key from your CP4D profile.'
+			description: 'Your username-associated API key from your CP4D profile.',
 		},
 	];
 }
