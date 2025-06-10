@@ -1,4 +1,5 @@
 # @bitovi/n8n-nodes-watsonx
+
 This n8n community package provides a node to integrate your workflows with IBM's watsonx.ai platform. It includes credential types for connecting to both IBM Cloud and on-premise Cloud Pak for Data instances, allowing you to use the WatsonX LLM node to leverage your watsonx instance.
 
 ## Installation
