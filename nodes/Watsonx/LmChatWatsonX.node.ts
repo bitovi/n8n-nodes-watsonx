@@ -1,5 +1,6 @@
 import {NodeConnectionTypes, type INodeType, type INodeTypeDescription, type ISupplyDataFunctions, type SupplyData} from 'n8n-workflow';
-
+import { N8nLlmTracing } from './depedancies/N8nLlmTracing';
+import { makeN8nLlmFailedAttemptHandler } from './depedancies/n8nLlmFailedAttemptHandler';
 import { ChatWatsonx } from '@langchain/community/chat_models/ibm';
 interface IWatsonxOptions {
 	decoding_method?: 'greedy' | 'sample';
@@ -109,14 +110,19 @@ export class LmChatWatsonX implements INodeType {
 
     const modelId = this.getNodeParameter('modelId', itemIndex) as string;
 		const options = this.getNodeParameter('options', itemIndex, {}) as IWatsonxOptions;
+		const defaultParams = { decoding_method: 'sample', maxNewTokens: 256 };
     const props: any = { //these are top level inputs from credentials used for both iam and bearer auth
       model: modelId,
       version: this.getNodeParameter('version', itemIndex),
-      parameters: this.getNodeParameter('parameters', itemIndex, {}),
+      parameters: { ...defaultParams, ...options },
+			stream: false,
       projectId: credentials.projectId,
 			...options,
+			callbacks: [new N8nLlmTracing(this)],
+			onFailedAttempt: makeN8nLlmFailedAttemptHandler(this)
 
     };
+		console.error('---------------------------', credentials.environmentType, props)
 
     if (credentials.environmentType === 'iam') { //langchain auth for iam
       const region = credentials.ibmCloudRegion;
@@ -149,8 +155,10 @@ export class LmChatWatsonX implements INodeType {
         serviceUrl: props.serviceUrl,
       });
     }
+		console.error('---------------------------', credentials.environmentType, props)
 
-    const model = new ChatWatsonx(props);
+    const model = new ChatWatsonx(props, );
+
     return { response: model };
   }
 }

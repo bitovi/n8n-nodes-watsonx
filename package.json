@@ -39,10 +39,12 @@
       "dist/credentials/WatsonXApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/Watsonx/LmChatWatsonX.node.js"
+      "dist/nodes/Watsonx/LmChatWatsonX.node.js",
+      "dist/nodes/AgentV2custom/AgentV2custom.node.js"
     ]
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.17",
     "@typescript-eslint/parser": "^7.15.0",
     "eslint": "^8.56.0",
     "eslint-plugin-n8n-nodes-base": "^1.16.1",
@@ -55,6 +57,7 @@
     "n8n-workflow": "^1.94.0"
   },
   "dependencies": {
-    "@langchain/community": "^0.3.45"
+    "@langchain/community": "^0.3.45",
+    "lodash": "^4.17.21"
   }
 }
