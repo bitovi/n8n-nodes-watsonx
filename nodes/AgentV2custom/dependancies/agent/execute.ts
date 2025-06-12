@@ -1,4 +1,3 @@
-
 import { DynamicStructuredTool } from 'langchain/tools';
 import { z } from 'zod';
 
@@ -29,36 +28,33 @@ export async function toolsAgentExecute(this: IExecuteFunctions): Promise<INodeE
 	const returnData: INodeExecutionData[] = [];
 	const items = this.getInputData();
 	const outputParser = await getOptionalOutputParser(this);
-	const tools = await getTools(this, outputParser); // Get tools from connected nodes first
+	const tools = await getTools(this, outputParser);
 	const batchSize = this.getNodeParameter('options.batching.batchSize', 0, 1) as number;
-	const delayBetweenBatches = this.getNodeParameter(
-		'options.batching.delayBetweenBatches',
-		0,
-		0,
-	) as number;
+	const delayBetweenBatches = this.getNodeParameter('options.batching.delayBetweenBatches', 0, 0) as number;
 	const memory = await getOptionalMemory(this);
 	const model = await getChatModel(this);
 
-	// --- START: ADDED LOGIC TO PREVENT 400 ERROR ---
-	// Check if a formatting tool already exists (it might be provided by getTools).
-	const hasFormattingTool = tools.some((tool) => tool.name === 'format_final_json_response');
+	/* ----------------------------------------------------------------------
+	   1. Guarantee the “format_final_json_response” tool always exists. Prevents IBM WatsonX error since ibm handling is worse
+	---------------------------------------------------------------------- */
+	if (!tools.some((t) => t.name === 'format_final_json_response')) {
+		this.logger.debug('No formatting tool found. Injecting default formatter.');
 
-	// If no formatting tool is found, add a default one. This ensures the agent
-	// can always follow its instructions, preventing a 400 error when no tools are connected.
-	if (!hasFormattingTool) {
-		this.logger.debug('No formatting tool found. Adding default formatter.');
-		const defaultFormatterTool = new DynamicStructuredTool({
-			name: 'format_final_json_response',
-			description:
-				'Formats the final answer and sends it to the user. Use this for your final response.',
-
-			schema: z.object({
-				output: z.any().describe('The final answer to the user. Can be a string or a JSON object.'),
+		tools.push(
+			new DynamicStructuredTool({
+				name: 'format_final_json_response',
+				description:
+					'FINAL STEP ONLY — packages your complete answer for the user. ' +
+					'Call this exactly once, when you have finished reasoning.',
+				schema: z.object({
+					output: z.any().describe(
+						'The final answer for the user. Can be plain text or a structured JSON object.',
+					),
+				}),
+				/*  Must return stringified JSON so jsonParse() works later on  */
+				func: async (input) => JSON.stringify(input),
 			}),
-			// The function MUST return a stringified JSON to be compatible with the jsonParse logic below.
-			func: async (input) => JSON.stringify(input),
-		});
-		tools.push(defaultFormatterTool);
+		);
 	}
 
 	for (let i = 0; i < items.length; i += batchSize) {
@@ -66,6 +62,7 @@ export async function toolsAgentExecute(this: IExecuteFunctions): Promise<INodeE
 		const batchPromises = batch.map(async (_item, batchItemIndex) => {
 			const itemIndex = i + batchItemIndex;
 
+			/* ------------- input ↔ prompt prep ------------- */
 			const input = getPromptInputByType({
 				ctx: this,
 				i: itemIndex,
@@ -90,7 +87,13 @@ export async function toolsAgentExecute(this: IExecuteFunctions): Promise<INodeE
 			});
 			const prompt: ChatPromptTemplate = preparePrompt(messages);
 
-			const agent = createToolCallingAgent({ llm: model, tools, prompt, streamRunnable: false });
+			/* ------------- create agent & executor ------------- */
+			const agent = createToolCallingAgent({
+				llm: model,
+				tools,
+				prompt,
+				streamRunnable: false,
+			});
 			agent.streamRunnable = false;
 
 			const runnableAgent = RunnableSequence.from([
@@ -98,6 +101,7 @@ export async function toolsAgentExecute(this: IExecuteFunctions): Promise<INodeE
 				getAgentStepsParser(outputParser, memory),
 				fixEmptyContentMessage,
 			]);
+
 			const executor = AgentExecutor.fromAgentAndTools({
 				agent: runnableAgent,
 				memory,
@@ -106,21 +110,28 @@ export async function toolsAgentExecute(this: IExecuteFunctions): Promise<INodeE
 				maxIterations: options.maxIterations ?? 10,
 			});
 
+			/* ------------- run! ------------- */
 			return await executor.invoke(
 				{
 					input,
 					system_message: options.systemMessage ?? SYSTEM_MESSAGE,
 					formatting_instructions:
-						'IMPORTANT: For your response to user, you MUST use the `format_final_json_response` tool with your complete answer formatted according to the required schema. Do not attempt to format the JSON manually - always use this tool. Your response will be rejected if it is not properly formatted through this tool. Only use this tool once you are ready to provide your final answer.',
+						'IMPORTANT: For your response to the user, you MUST call the ' +
+						'`format_final_json_response` tool with your complete answer. ' +
+						'Do NOT hand‑craft JSON – always use the tool, and only once.',
 				},
 				{ signal: this.getExecutionCancelSignal() },
 			);
 		});
 
+		/* ------------------------------------------------------------------
+		   3. Collect / transform results
+		------------------------------------------------------------------ */
 		const batchResults = await Promise.allSettled(batchPromises);
 
 		batchResults.forEach((result, index) => {
 			const itemIndex = i + index;
+
 			if (result.status === 'rejected') {
 				const error = result.reason as Error;
 				if (this.continueOnFail()) {
@@ -129,19 +140,19 @@ export async function toolsAgentExecute(this: IExecuteFunctions): Promise<INodeE
 						pairedItem: { item: itemIndex },
 					});
 					return;
-				} else {
-					throw new NodeOperationError(this.getNode(), error);
 				}
-			}
-			const response = result.value;
-			if (memory && outputParser) {
-				const parsedOutput = jsonParse<{ output: Record<string, unknown> }>(
-					response.output as string,
-				);
-				response.output = parsedOutput?.output ?? parsedOutput;
+				throw new NodeOperationError(this.getNode(), error);
 			}
 
-			const itemResult = {
+			const response = result.value;
+
+			/*  Parse the formatter output when memory/outputParser are in play  */
+			if (memory && outputParser) {
+				const parsed = jsonParse<{ output: unknown }>(response.output as string);
+				response.output = parsed?.output ?? parsed;
+			}
+
+			returnData.push({
 				json: omit(
 					response,
 					'system_message',
@@ -151,9 +162,7 @@ export async function toolsAgentExecute(this: IExecuteFunctions): Promise<INodeE
 					'agent_scratchpad',
 				),
 				pairedItem: { item: itemIndex },
-			};
-
-			returnData.push(itemResult);
+			});
 		});
 
 		if (i + batchSize < items.length && delayBetweenBatches > 0) {

@@ -15,8 +15,6 @@ import { promptTypeOptions, textFromPreviousNode, textInput } from './dependanci
 import { toolsAgentProperties } from './dependancies/agent/description';
 import { toolsAgentExecute } from './dependancies/agent/execute';
 
-// Function used in the inputs expression to figure out which inputs to
-// display based on the agent type
 function getInputs(hasOutputParser?: boolean): Array<NodeConnectionType | INodeInputConfiguration> {
 	interface SpecialInput {
 		type: NodeConnectionType;
@@ -169,16 +167,15 @@ class AgentV2impl implements INodeType {
 export class AgentV2custom extends VersionedNodeType {
 	constructor() {
 		const baseDescription: INodeTypeBaseDescription = {
-			displayName: 'WatsonX AI Agent', // Your custom display name
+			displayName: 'WatsonX AI Agent',
 			name: 'agentV2custom',      // A unique internal name
-			icon: 'fa:robot',
+			icon: 'file:IBM_watsonx_logo.svg',
 			group: ['transform'],
 			description: 'A custom agent that connects to WatsonX.',
 			defaultVersion: 2,
 		};
 
 		const nodeVersions: IVersionedNodeType['nodeVersions'] = {
-			// Here we tell n8n that for version 3, it should use our implementation class
 			2: new AgentV2impl(baseDescription),
 		};
 
