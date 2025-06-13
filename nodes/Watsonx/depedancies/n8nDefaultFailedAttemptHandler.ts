@@ -16,10 +16,9 @@ const STATUS_NO_RETRY = [
  * It throws an error when it encounters a known error that should not be retried.
  * @param error
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export const n8nDefaultFailedAttemptHandler = (error: any) => {
 	if (
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
 		error?.message?.startsWith?.('Cancel') ||
 		error?.message?.startsWith?.('AbortError') ||
 		error?.name === 'AbortError'
@@ -27,13 +26,11 @@ export const n8nDefaultFailedAttemptHandler = (error: any) => {
 		throw error;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-member-access
 	if (error?.code === 'ECONNABORTED') {
 		throw error;
 	}
 
 	const status =
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-member-access
 		error?.response?.status ?? error?.status;
 	if (status && STATUS_NO_RETRY.includes(+status)) {
 		throw error;

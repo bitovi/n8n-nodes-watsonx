@@ -31,7 +31,6 @@ export const makeN8nLlmFailedAttemptHandler = (
 		}
 
 		// If no error was thrown, check if it is the last retry
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		if (error?.retriesLeft > 0) {
 			return;
 		}

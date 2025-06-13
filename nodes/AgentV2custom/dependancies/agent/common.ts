@@ -22,10 +22,8 @@ import { type N8nOutputParser } from '../utils/N8nOutputParser';
  */
 export function getOutputParserSchema(
 	outputParser: N8nOutputParser,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): ZodObject<any, any, any, any> {
 	const schema =
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(outputParser.getSchema() as ZodObject<any, any, any, any>) ?? z.object({ text: z.string() });
 	return schema;
 }
@@ -103,7 +101,6 @@ export function fixEmptyContentMessage(
 			if (Array.isArray(step.messageLog)) {
 				step.messageLog.forEach((message: BaseMessage) => {
 					if ('content' in message && Array.isArray(message.content)) {
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						(message.content as Array<{ input?: string | object }>).forEach((content) => {
 							if (content.input === '') {
 								content.input = {};
