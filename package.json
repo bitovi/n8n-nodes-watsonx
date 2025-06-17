@@ -40,7 +40,6 @@
     ],
     "nodes": [
       "dist/nodes/Watsonx/LmChatWatsonX.node.js",
-      "dist/nodes/Watsonx/LmLangfuseWatsonX.node.js",
       "dist/nodes/AgentV2custom/AgentV2custom.node.js"
     ]
   },

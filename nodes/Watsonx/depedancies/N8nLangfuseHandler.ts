@@ -91,7 +91,7 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
 
         //custom time metric
         this.endTime = Date.now();
-        const modelRunTime = this.startTime ? this.endTime - this.startTime : 0;
+        //const modelRunTime = this.startTime ? this.endTime - this.startTime : 0;
 
         this.logger.log("[WatsonX-Langfuse] Updating trace and span with output and metadata...");
         await this.trace?.update({
@@ -135,7 +135,7 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
 
         //custom time metric
         this.endTime = Date.now();
-        const modelRunTime = this.startTime ? this.endTime - this.startTime : 0;
+        //const modelRunTime = this.startTime ? this.endTime - this.startTime : 0;
 
         this.logger.log("[WatsonX-Langfuse] Updating trace and span with LLM error...");
         await this.trace?.update({
