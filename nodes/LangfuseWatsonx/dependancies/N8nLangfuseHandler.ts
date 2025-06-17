@@ -75,14 +75,14 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
         let text = '[missing output]';
         if (output?.generations) {
             const gens = output.generations;
-            text = Array.isArray(gens[0]) ? gens[0][0]?.text : gens[0]?.text;
+            text = Array.isArray(gens[0]) ? gens[0][0]?.text : (gens[0] as any)?.text;
         }
 
         // Extract usage tokens
         let promptTokens = 0, completionTokens = 0, totalTokens = 0;
         try {
             const gens = output.generations;
-            const msg = Array.isArray(gens[0]) ? gens[0][0].message : gens[0].message;
+            const msg = Array.isArray(gens[0]) ? (gens[0][0] as any).message : (gens[0] as any).message;
             const usage = msg.kwargs?.usage_metadata || {};
             promptTokens = usage.input_tokens || 0;
             completionTokens = usage.output_tokens || 0;
@@ -137,7 +137,7 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
         this.endTime = Date.now();
         const modelRunTime = this.startTime ? this.endTime - this.startTime : 0;
 
-        his.logger.log("[WatsonX-Langfuse] Updating trace and span with LLM error...");
+        this.logger.log("[WatsonX-Langfuse] Updating trace and span with LLM error...");
         await this.trace?.update({
             output: `[WatsonX-Langfuse] Error: ${error.message}`,
             metadata: { 
