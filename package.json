@@ -40,6 +40,7 @@
     ],
     "nodes": [
       "dist/nodes/Watsonx/LmChatWatsonX.node.js",
+      "dist/nodes/Watsonx/LmLangfuseWatsonX.node.js",
       "dist/nodes/AgentV2custom/AgentV2custom.node.js"
     ]
   },
@@ -58,6 +59,7 @@
   },
   "dependencies": {
     "@langchain/community": "^0.3.45",
+    "langfuse": "^3.37.4",
     "lodash": "^4.17.21"
   }
 }
