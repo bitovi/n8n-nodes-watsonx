@@ -61,7 +61,6 @@ export class LmChatWatsonX implements INodeType {
 				default: {},
 				description: "Additional options to control the model's behavior",
 				options: [
-
 					{
 						displayName: 'Maximum Number of Tokens',
 						name: 'maxTokens',
@@ -161,23 +160,27 @@ export class LmChatWatsonX implements INodeType {
 
 		//Langfuse Handler Creation
 		try {
-			this.logger.debug("[WatsonX-Langfuse] Initializing Langfuse Callback Handler...");
-			const langfuse = new N8nLangfuseHandler({
-				publicKey: process.env.LANGFUSE_PUBLIC_KEY,
-				secretKey: process.env.LANGFUSE_SECRET_KEY,
-				baseUrl: process.env.LANGFUSE_HOST,
-				metadata: { 
-					modelName: modelId,
-					workflowName: this.getWorkflow().name as string
-				},
-				logger: this.logger,
-			});
-			callbacks.push(langfuse);
-			this.logger.debug('[WatsonX-Langfuse] Langfuse handler initialized, added to callbacks.');
+			if (process.env.LANGFUSE_HOST) {
+				this.logger.debug('[WatsonX-Langfuse] Initializing Langfuse Callback Handler...');
+				const langfuse = new N8nLangfuseHandler({
+					publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+					secretKey: process.env.LANGFUSE_SECRET_KEY,
+					baseUrl: process.env.LANGFUSE_HOST,
+					metadata: {
+						modelName: modelId,
+						workflowName: this.getWorkflow().name as string,
+					},
+					logger: this.logger,
+				});
+				callbacks.push(langfuse);
+				this.logger.debug('[WatsonX-Langfuse] Langfuse handler initialized, added to callbacks.');
+			}
 		} catch (error) {
-			this.logger.debug('[WatsonX-Langfuse] Langfuse credentials not found or invalid, skipping Langfuse tracing.');
+			this.logger.debug(
+				'[WatsonX-Langfuse] Langfuse credentials not found or invalid, skipping Langfuse tracing.',
+			);
 		}
-		
+
 		const props: any = {
 			model: modelId,
 			version: this.getNodeParameter('version', itemIndex),
@@ -197,15 +200,16 @@ export class LmChatWatsonX implements INodeType {
 			// Let LangChain handle bearer token exchange
 			const baseUrl = (credentials.onPremiseUrl as string).replace(/\/$/, '');
 			const authUrl = `${baseUrl}/icp4d-api/v1/authorize`;
-			const authResponse = await this.helpers.httpRequest({ //get bearer token via json http
+			const authResponse = await this.helpers.httpRequest({
+				//get bearer token via json http
 				method: 'POST',
-					url: authUrl,
-					body: {
-						username: credentials.username,
-						api_key: credentials.apiKey,
-					},
-					json: true,
-				});
+				url: authUrl,
+				body: {
+					username: credentials.username,
+					api_key: credentials.apiKey,
+				},
+				json: true,
+			});
 			const accessToken = authResponse.token;
 			console.log('DEBUG - CP4D bearer token acquired:', !!accessToken);
 			props.watsonxAIAuthType = 'bearertoken';

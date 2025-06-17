@@ -7,10 +7,15 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 	NodeConnectionType,
-	INodeTypeBaseDescription, IVersionedNodeType
+	INodeTypeBaseDescription,
+	IVersionedNodeType,
 } from 'n8n-workflow';
 
-import { promptTypeOptions, textFromPreviousNode, textInput } from './dependancies/utils/descriptions';
+import {
+	promptTypeOptions,
+	textFromPreviousNode,
+	textInput,
+} from './dependancies/utils/descriptions';
 
 import { toolsAgentProperties } from './dependancies/agent/description';
 import { toolsAgentExecute } from './dependancies/agent/execute';
@@ -72,7 +77,7 @@ function getInputs(hasOutputParser?: boolean): Array<NodeConnectionType | INodeI
 					'@n8n/n8n-nodes-langchain.lmChatGoogleGemini',
 					'@n8n/n8n-nodes-langchain.lmChatDeepSeek',
 					'@n8n/n8n-nodes-langchain.lmChatOpenRouter',
-					'CUSTOM.lmChatWatsonX'
+					'CUSTOM.lmChatWatsonX',
 				],
 			},
 		},
@@ -168,7 +173,7 @@ export class AgentV2custom extends VersionedNodeType {
 	constructor() {
 		const baseDescription: INodeTypeBaseDescription = {
 			displayName: 'WatsonX AI Agent',
-			name: 'agentV2custom',      // A unique internal name
+			name: 'agentV2custom', // A unique internal name
 			icon: 'file:IBM_watsonx_logo.svg',
 			group: ['transform'],
 			description: 'A custom agent that connects to WatsonX.',

@@ -30,7 +30,11 @@ export async function toolsAgentExecute(this: IExecuteFunctions): Promise<INodeE
 	const outputParser = await getOptionalOutputParser(this);
 	const tools = await getTools(this, outputParser);
 	const batchSize = this.getNodeParameter('options.batching.batchSize', 0, 1) as number;
-	const delayBetweenBatches = this.getNodeParameter('options.batching.delayBetweenBatches', 0, 0) as number;
+	const delayBetweenBatches = this.getNodeParameter(
+		'options.batching.delayBetweenBatches',
+		0,
+		0,
+	) as number;
 	const memory = await getOptionalMemory(this);
 	const model = await getChatModel(this);
 
@@ -47,9 +51,11 @@ export async function toolsAgentExecute(this: IExecuteFunctions): Promise<INodeE
 					'FINAL STEP ONLY — packages your complete answer for the user. ' +
 					'Call this exactly once, when you have finished reasoning.',
 				schema: z.object({
-					output: z.any().describe(
-						'The final answer for the user. Can be plain text or a structured JSON object.',
-					),
+					output: z
+						.any()
+						.describe(
+							'The final answer for the user. Can be plain text or a structured JSON object.',
+						),
 				}),
 				/*  Must return stringified JSON so jsonParse() works later on  */
 				func: async (input) => JSON.stringify(input),
