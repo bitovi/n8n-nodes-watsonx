@@ -118,7 +118,7 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
             }
         });
 
-        await langfuseEnd(this.langfuse,this.span as LangfuseSpanClient);
+        await langfuseEnd(this.langfuse,this.span as LangfuseSpanClient, this.logger);
     }
 
     async handleLLMError(error: IDataObject | Error) {
@@ -156,6 +156,6 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
             }
         });
 
-        await langfuseEnd(this.langfuse,this.span as LangfuseSpanClient);
+        await langfuseEnd(this.langfuse,this.span as LangfuseSpanClient, this.logger);
     }
 }

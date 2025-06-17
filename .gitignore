@@ -8,7 +8,6 @@ yarn.lock
 .vscode/launch.json
 /.idea/misc.xml
 /package-lock.json
-/pnpm-lock.json
 /.idea/inspectionProfiles/profiles_settings.xml
 /.idea/inspectionProfiles/Project_Default.xml
 /.idea/vcs.xml
