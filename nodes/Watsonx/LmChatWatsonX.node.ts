@@ -10,6 +10,7 @@ import {
 import { N8nLlmTracing } from './depedancies/N8nLlmTracing';
 import { makeN8nLlmFailedAttemptHandler } from './depedancies/n8nLlmFailedAttemptHandler';
 import { ChatWatsonx } from '@langchain/community/chat_models/ibm';
+import { LangfuseN8nHandler } from './depedancies/LangfuseCallbackHandler';
 
 interface IWatsonxOptions {
 	temperature?: number;
@@ -31,7 +32,8 @@ export class LmChatWatsonX implements INodeType {
 		// eslint-disable-next-line n8n-nodes-base/node-class-description-outputs-wrong
 		outputs: [NodeConnectionTypes.AiLanguageModel],
 		outputNames: ['Model'],
-		credentials: [{ name: 'watsonxApi', required: true }],
+		credentials: [{ name: 'watsonxApi', required: true },
+			{name: 'langfuseApi', required: false}],
 		properties: [
 			{
 				displayName: 'Model Name or ID',
@@ -156,7 +158,28 @@ export class LmChatWatsonX implements INodeType {
 		const credentials = await this.getCredentials('watsonxApi', itemIndex);
 		const modelId = this.getNodeParameter('modelId', itemIndex) as string;
 		const options = this.getNodeParameter('options', itemIndex, {}) as IWatsonxOptions;
+		const callbacks = [
+			new N8nLlmTracing(this),
+		];
 
+		// Conditionally add the Langfuse handler
+		try {
+			const langfuseCreds = await this.getCredentials('langfuseApi', itemIndex);
+			// If credentials exist, initialize and add the handler
+			if (langfuseCreds) {
+				const langfuseHandler = new LangfuseN8nHandler({
+					publicKey: langfuseCreds.publicKey,
+					secretKey: langfuseCreds.secretKey,
+					baseUrl: langfuseCreds.baseUrl,
+					modelName: modelId,
+				});
+				callbacks.push(langfuseHandler);
+				this.logger.debug('Langfuse handler initialized and added to callbacks.');
+			}
+		} catch (error) {
+			// This will be triggered if the 'langfuseApi' credential is not set up.
+			this.logger.debug('Langfuse credentials not found or invalid, skipping Langfuse tracing.');
+		}
 
 		const props: any = {
 			model: modelId,
@@ -164,7 +187,7 @@ export class LmChatWatsonX implements INodeType {
 			projectId: credentials.projectId,
 			stream: false,
 			...options,
-			callbacks: [new N8nLlmTracing(this)],
+			callbacks: callbacks,
 			onFailedAttempt: makeN8nLlmFailedAttemptHandler(this),
 		};
 
@@ -174,7 +197,6 @@ export class LmChatWatsonX implements INodeType {
 			props.watsonxAIApikey = credentials.ibmCloudApiKey;
 			props.serviceUrl = `https://${region}.ml.cloud.ibm.com`;
 		} else {
-			// Let LangChain handle bearer token exchange
 			const baseUrl = (credentials.onPremiseUrl as string).replace(/\/$/, '');
 			const authUrl = `${baseUrl}/icp4d-api/v1/authorize`;
 			const authResponse = await this.helpers.httpRequest({ //get bearer token via json http
