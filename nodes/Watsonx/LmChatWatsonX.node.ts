@@ -99,14 +99,14 @@ export class LmChatWatsonX implements INodeType {
 					{
 						displayName: 'Output Format',
 						name: 'outputFormat',
-						type: 'options',options: [
-				{ name: 'Default', value: 'default' },
-				{ name: 'JSON', value: 'json' },
-			],
-			default: 'default',
-			description: 'Specifies the format of the API response',
+						type: 'options',
+						options: [
+							{ name: 'Default', value: 'default' },
+							{ name: 'JSON', value: 'json' },
+						],
+						default: 'default',
+						description: 'Specifies the format of the API response',
 					},
-
 				],
 			},
 		],
@@ -202,10 +202,10 @@ export class LmChatWatsonX implements INodeType {
 			onFailedAttempt: makeN8nLlmFailedAttemptHandler(this),
 		};
 		const outputFormat = props.outputFormat;
-    delete props.outputFormat;
+		delete props.outputFormat;
 
-    // This property is not used by the constructor, so we can clean it up
-    delete props.stream;
+		// This property is not used by the constructor, so we can clean it up
+		delete props.stream;
 		if (credentials.environmentType === 'iam') {
 			const region = credentials.ibmCloudRegion;
 			props.watsonxAIAuthType = 'iam';
@@ -233,14 +233,17 @@ export class LmChatWatsonX implements INodeType {
 			props.serviceUrl = baseUrl;
 		}
 
-		this.logger.debug('--------------------------------------------------------------------------------------Initializing ChatWatsonx with props:', props);
+		this.logger.debug(
+			'--------------------------------------------------------------------------------------Initializing ChatWatsonx with props:',
+			props,
+		);
 		let model: any = new ChatWatsonx(props);
 		if (outputFormat === 'json') {
-        this.logger.debug('Applying native JSON mode via .withConfig()');
-        model = model.withConfig({
-            responseFormat: { type: 'json_object' },
-        });
-    }
+			this.logger.debug('Applying native JSON mode via .withConfig()');
+			model = model.withConfig({
+				responseFormat: { type: 'json_object' },
+			});
+		}
 
 		return { response: model };
 	}
