@@ -4,8 +4,13 @@ export function slugifyWorkflowName(name: string) {
 	return name.trim().toLowerCase().replace(/\s+/g, '-');
 }
 
-export async function langfuseEnd(logger: any, langfuse: Langfuse, spans: LangfuseSpanClient[]) {
-	logger.debug('[WatsonX-Langfuse] Closing Langfuse...');
+export async function langfuseEnd(
+	logger: any,
+	logName: string,
+	langfuse: Langfuse,
+	spans: LangfuseSpanClient[],
+) {
+	logger.debug(`[${logName}] Flushing Langfuse...`);
 	for (let s = 0; s < spans.length; s++) {
 		await spans[s].end();
 	}

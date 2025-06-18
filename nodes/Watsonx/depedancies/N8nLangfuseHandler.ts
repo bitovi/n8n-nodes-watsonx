@@ -5,7 +5,12 @@ import type { LLMResult } from '@langchain/core/outputs';
 import type { Serialized } from '@langchain/core/load/serializable';
 import type { IDataObject } from 'n8n-workflow';
 
-import { slugifyWorkflowName, langfuseEnd } from './N8nLangfuseHelpers';
+import {
+	slugifyWorkflowName,
+	langfuseEnd,
+} from '../../AgentV2custom/dependancies/utils/N8nLangfuseHelpers';
+
+const LOG_NAME = 'WatsonX-Langfuse';
 
 type LangfuseConfig = {
 	publicKey: string | undefined;
@@ -62,15 +67,15 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
 			typeof raw === 'string' ? raw.replace(/^Human:\s*/, '') : (raw as any)?.text || String(raw);
 
 		const workflowSlug = slugifyWorkflowName(this.metadata.workflowName);
-		this.logger.debug('[WatsonX-Langfuse] Creating trace...');
+		this.logger.debug(`[${LOG_NAME}] Creating trace...`);
 		this.trace = this.langfuse.trace({
 			name: `trace-test-${workflowSlug}`,
 			userId: 'n8n-watsonx-llmx-test',
 		});
-		this.logger.debug('[WatsonX-Langfuse] Creating LLM span...');
+		this.logger.debug(`[${LOG_NAME}] Creating LLM span...`);
 		this.llmSpan = this.trace.span({ name: `span-llm-${workflowSlug}` });
 
-		this.logger.debug('[WatsonX-Langfuse] Updating trace and LLM span with input and metadata...');
+		this.logger.debug(`[${LOG_NAME}] Updating trace and LLM span with input and metadata...`);
 		await this.trace.update({
 			input: this.input,
 			metadata: { step: 'started', startTime: this.startTime, ...this.metadata },
@@ -105,7 +110,7 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
 		//custom time metric
 		this.endTime = Date.now();
 
-		this.logger.debug('[WatsonX-Langfuse] Updating trace and LLM span with output and metadata...');
+		this.logger.debug(`[${LOG_NAME}] Updating trace and LLM span with output and metadata...`);
 		await this.trace?.update({
 			output: text,
 			metadata: {
@@ -130,7 +135,7 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
 			},
 		});
 
-		await langfuseEnd(this.logger, this.langfuse, [this.llmSpan as LangfuseSpanClient]);
+		await langfuseEnd(this.logger, LOG_NAME, this.langfuse, [this.llmSpan as LangfuseSpanClient]);
 	}
 
 	async handleLLMError(error: IDataObject | Error) {
@@ -149,9 +154,9 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
 		this.endTime = Date.now();
 		//const modelRunTime = this.startTime ? this.endTime - this.startTime : 0;
 
-		this.logger.debug('[WatsonX-Langfuse] Updating trace and LLM span with LLM error...');
+		this.logger.debug(`[${LOG_NAME}] Updating trace and LLM span with LLM error...`);
 		await this.trace?.update({
-			output: `[WatsonX-Langfuse] Error: ${error.message}`,
+			output: `[${LOG_NAME}] Error: ${error.message}`,
 			metadata: {
 				step: 'error',
 				endTime: this.endTime,
@@ -160,7 +165,7 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
 		});
 
 		await this.llmSpan?.update({
-			output: `[WatsonX-Langfuse] Error: ${error.message}`,
+			output: `[${LOG_NAME}] Error: ${error.message}`,
 			metadata: {
 				step: 'error',
 				endTime: this.endTime,
@@ -168,71 +173,6 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
 			},
 		});
 
-		await langfuseEnd(this.logger, this.langfuse, [this.llmSpan as LangfuseSpanClient]);
-	}
-
-	// Tools
-	async handleToolStart(
-		tool: Serialized,
-		input: string,
-		runId: string,
-		parentRunId?: string | undefined,
-		tags?: string[] | undefined,
-		metadata?: Record<string, unknown> | undefined,
-		name?: string,
-	): Promise<void> {
-		this.logger.debug(`[WatsonX-Langfuse] Tool ${name} start, creating Tool span...`);
-		this.toolSpan = (this.trace as LangfuseTraceClient).span({
-			id: runId,
-			name: `span-tool-${tool.name}`,
-			input: input,
-			metadata: {
-				step: 'tool_start',
-				toolType: tool.type,
-				toolMetadata: metadata,
-				toolStartTime: Date.now(),
-				...this.metadata,
-			},
-		});
-	}
-
-	async handleToolEnd(output: string): Promise<void> {
-		this.logger.debug(`[WatsonX-Langfuse] Updating Tool span...`);
-		await this.toolSpan?.update({
-			output: output,
-			metadata: {
-				step: 'tool_completed',
-				toolEndTime: Date.now(),
-				...this.metadata,
-			},
-		});
-		await this.toolSpan?.end();
-	}
-
-	async handleToolError(err: any): Promise<void> {
-		// Filter out non-x- headers to avoid leaking sensitive information in logs
-		if (typeof err === 'object' && err?.hasOwnProperty('headers')) {
-			const errorWithHeaders = err as { headers: Record<string, unknown> };
-
-			Object.keys(errorWithHeaders.headers).forEach((key) => {
-				if (!key.startsWith('x-')) {
-					delete errorWithHeaders.headers[key];
-				}
-			});
-		}
-
-		this.logger.debug('[WatsonX-Langfuse] Updating Tool span with Tool error...');
-		await this.toolSpan?.update({
-			output: `[WatsonX-Langfuse] Tool Error: ${err.message}`,
-			metadata: {
-				step: 'tool_error',
-				toolEndTime: Date.now(),
-				...this.metadata,
-			},
-		});
-		await langfuseEnd(this.logger, this.langfuse, [
-			this.llmSpan as LangfuseSpanClient,
-			this.toolSpan as LangfuseSpanClient,
-		]);
+		await langfuseEnd(this.logger, LOG_NAME, this.langfuse, [this.llmSpan as LangfuseSpanClient]);
 	}
 }
