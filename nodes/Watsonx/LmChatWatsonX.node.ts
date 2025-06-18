@@ -25,7 +25,7 @@ export class LmChatWatsonX implements INodeType {
 		icon: 'file:IBM_watsonx_logo.svg',
 		group: ['transform'],
 		version: 1.0,
-		description: 'For advanced usage with an AI chain',
+		description: 'For advanced usage with an AI chain and tracked via Langfuse',
 		defaults: { name: 'WatsonX LLM' },
 		// eslint-disable-next-line n8n-nodes-base/node-class-description-inputs-wrong-regular-node
 		inputs: [],
