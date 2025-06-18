@@ -11,6 +11,9 @@ import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { getPromptInputByType } from '../utils/helpers';
 import { getOptionalOutputParser } from '../utils/N8nOutputParser';
 
+import { N8nLangfuseAgentHandler } from '../utils/N8nLangfuseAgentHandler';
+import { Callbacks } from '@langchain/core/callbacks/manager';
+
 import {
 	fixEmptyContentMessage,
 	getAgentStepsParser,
@@ -60,6 +63,30 @@ export async function toolsAgentExecute(this: IExecuteFunctions): Promise<INodeE
 				/*  Must return stringified JSON so jsonParse() works later on  */
 				func: async (input) => JSON.stringify(input),
 			}),
+		);
+	}
+
+	//Langfuse Handler Creation
+	var callbacks: Callbacks | undefined = undefined;
+	try {
+		if (process.env.LANGFUSE_HOST) {
+			this.logger.debug('[WatsonX-Langfuse-Agent] Initializing Langfuse Callback Handler...');
+			const langfuse = new N8nLangfuseAgentHandler({
+				publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+				secretKey: process.env.LANGFUSE_SECRET_KEY,
+				baseUrl: process.env.LANGFUSE_HOST,
+				metadata: {
+					modelName: model.name as string,
+					workflowName: this.getWorkflow().name as string,
+				},
+				logger: this.logger,
+			});
+			callbacks = [langfuse]
+			this.logger.debug('[WatsonX-Langfuse-Agent] Langfuse Agent handler initialized, added to callbacks.');
+		}
+	} catch (error) {
+		this.logger.debug(
+			'[WatsonX-Langfuse-Agent] Langfuse Agent credentials not found or invalid, skipping Langfuse tracing.',
 		);
 	}
 
@@ -114,6 +141,7 @@ export async function toolsAgentExecute(this: IExecuteFunctions): Promise<INodeE
 				tools,
 				returnIntermediateSteps: options.returnIntermediateSteps === true,
 				maxIterations: options.maxIterations ?? 10,
+				callbacks
 			});
 
 			/* ------------- run! ------------- */
