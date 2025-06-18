@@ -11,6 +11,9 @@ importers:
       '@langchain/community':
         specifier: ^0.3.45
         version: 0.3.45(@browserbasehq/sdk@2.6.0)(@browserbasehq/stagehand@1.14.0(@playwright/test@1.52.0)(deepmerge@4.3.1)(dotenv@16.5.0)(openai@4.104.0(ws@8.18.2)(zod@3.25.56))(zod@3.25.56))(@ibm-cloud/watsonx-ai@1.6.7)(@langchain/core@0.3.57(openai@4.104.0(ws@8.18.2)(zod@3.25.56)))(axios@1.9.0)(ibm-cloud-sdk-core@5.4.0)(ignore@5.2.0)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@4.104.0(ws@8.18.2)(zod@3.25.56))(playwright@1.52.0)(weaviate-client@3.6.0)(ws@8.18.2)
+      langfuse:
+        specifier: ^3.37.4
+        version: 3.37.4
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -1883,6 +1886,14 @@ packages:
         optional: true
       typeorm:
         optional: true
+
+  langfuse-core@3.37.4:
+    resolution: {integrity: sha512-yqXkQ1/8V9TxF8q6oULWPQ4cYZlUs1egN6JfGuhJSWb5x2Ymgt4Qh9of/Kz//CTM7IZgzZqvrlnx0VXhNKDITg==}
+    engines: {node: '>=18'}
+
+  langfuse@3.37.4:
+    resolution: {integrity: sha512-MxnJXkS3xqlydMKWouanghkWZb8OqoDns+NIAZoD+y/WQh1mtx40n8c0dOaT7OahzSfB9ZbWj+j+yqJww/PJYQ==}
+    engines: {node: '>=18'}
 
   langsmith@0.3.30:
     resolution: {integrity: sha512-ZaiaOx9MysuSQlAkRw8mjm7iqhrlF7HI0LCTLxiNBEWBPywdkgI7UnN+s7KtlRiM0tP1cOLm+dQY++Fi33jkPQ==}
@@ -4645,6 +4656,14 @@ snapshots:
       - encoding
       - openai
       - ws
+
+  langfuse-core@3.37.4:
+    dependencies:
+      mustache: 4.2.0
+
+  langfuse@3.37.4:
+    dependencies:
+      langfuse-core: 3.37.4
 
   langsmith@0.3.30(openai@4.104.0(ws@8.18.2)(zod@3.25.56)):
     dependencies:

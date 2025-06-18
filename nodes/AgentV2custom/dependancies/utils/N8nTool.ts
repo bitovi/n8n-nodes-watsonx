@@ -56,7 +56,6 @@ export class N8nTool extends DynamicStructuredTool {
 		const { name, func, context, description } = this;
 		const schema = this.schema as ZodObject<any>;
 
-
 		const parser = new StructuredOutputParser(schema);
 
 		const wrappedFunc = async function (query: string) {

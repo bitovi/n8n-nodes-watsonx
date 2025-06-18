@@ -30,8 +30,7 @@ export const n8nDefaultFailedAttemptHandler = (error: any) => {
 		throw error;
 	}
 
-	const status =
-		error?.response?.status ?? error?.status;
+	const status = error?.response?.status ?? error?.status;
 	if (status && STATUS_NO_RETRY.includes(+status)) {
 		throw error;
 	}

@@ -8,6 +8,7 @@ import {
 	INodePropertyOptions,
 } from 'n8n-workflow';
 import { N8nLlmTracing } from './depedancies/N8nLlmTracing';
+import { N8nLangfuseHandler } from './depedancies/N8nLangfuseHandler';
 import { makeN8nLlmFailedAttemptHandler } from './depedancies/n8nLlmFailedAttemptHandler';
 import { ChatWatsonx } from '@langchain/community/chat_models/ibm';
 
@@ -24,7 +25,7 @@ export class LmChatWatsonX implements INodeType {
 		icon: 'file:IBM_watsonx_logo.svg',
 		group: ['transform'],
 		version: 1.0,
-		description: 'For advanced usage with an AI chain',
+		description: 'For advanced usage with an AI chain and tracked via Langfuse',
 		defaults: { name: 'WatsonX LLM' },
 		// eslint-disable-next-line n8n-nodes-base/node-class-description-inputs-wrong-regular-node
 		inputs: [],
@@ -60,7 +61,6 @@ export class LmChatWatsonX implements INodeType {
 				default: {},
 				description: "Additional options to control the model's behavior",
 				options: [
-
 					{
 						displayName: 'Maximum Number of Tokens',
 						name: 'maxTokens',
@@ -167,7 +167,30 @@ export class LmChatWatsonX implements INodeType {
 		const credentials = await this.getCredentials('watsonxApi', itemIndex);
 		const modelId = this.getNodeParameter('modelId', itemIndex) as string;
 		const options = this.getNodeParameter('options', itemIndex, {}) as IWatsonxOptions;
+		const callbacks: any[] = [new N8nLlmTracing(this)];
 
+		//Langfuse Handler Creation
+		try {
+			if (process.env.LANGFUSE_HOST) {
+				this.logger.debug('[WatsonX-Langfuse] Initializing Langfuse Callback Handler...');
+				const langfuse = new N8nLangfuseHandler({
+					publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+					secretKey: process.env.LANGFUSE_SECRET_KEY,
+					baseUrl: process.env.LANGFUSE_HOST,
+					metadata: {
+						modelName: modelId,
+						workflowName: this.getWorkflow().name as string,
+					},
+					logger: this.logger,
+				});
+				callbacks.push(langfuse);
+				this.logger.debug('[WatsonX-Langfuse] Langfuse handler initialized, added to callbacks.');
+			}
+		} catch (error) {
+			this.logger.debug(
+				'[WatsonX-Langfuse] Langfuse credentials not found or invalid, skipping Langfuse tracing.',
+			);
+		}
 
 		const props: any = {
 			model: modelId,
@@ -175,7 +198,7 @@ export class LmChatWatsonX implements INodeType {
 			projectId: credentials.projectId,
 			stream: false,
 			...options,
-			callbacks: [new N8nLlmTracing(this)],
+			callbacks,
 			onFailedAttempt: makeN8nLlmFailedAttemptHandler(this),
 		};
 		const outputFormat = props.outputFormat;
@@ -192,15 +215,16 @@ export class LmChatWatsonX implements INodeType {
 			// Let LangChain handle bearer token exchange
 			const baseUrl = (credentials.onPremiseUrl as string).replace(/\/$/, '');
 			const authUrl = `${baseUrl}/icp4d-api/v1/authorize`;
-			const authResponse = await this.helpers.httpRequest({ //get bearer token via json http
+			const authResponse = await this.helpers.httpRequest({
+				//get bearer token via json http
 				method: 'POST',
-					url: authUrl,
-					body: {
-						username: credentials.username,
-						api_key: credentials.apiKey,
-					},
-					json: true,
-				});
+				url: authUrl,
+				body: {
+					username: credentials.username,
+					api_key: credentials.apiKey,
+				},
+				json: true,
+			});
 			const accessToken = authResponse.token;
 			console.log('DEBUG - CP4D bearer token acquired:', !!accessToken);
 			props.watsonxAIAuthType = 'bearertoken';
