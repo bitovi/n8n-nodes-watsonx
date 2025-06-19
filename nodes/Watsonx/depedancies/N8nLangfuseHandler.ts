@@ -7,6 +7,8 @@ import type { IDataObject } from 'n8n-workflow';
 
 import { slugifyWorkflowName, langfuseEnd } from './N8nLangfuseHelpers';
 
+const LOG_NAME = 'WatsonX-Langfuse';
+
 type LangfuseConfig = {
 	publicKey: string | undefined;
 	secretKey: string | undefined;
@@ -53,21 +55,21 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
 
 	async handleLLMStart(llm: Serialized, prompts: string[]) {
 		this.startTime = Date.now();
-		this.llmName = llm.name || 'watson-x'; //this.metadata.modelName
+		this.llmName = llm.name || 'watson-x-llm'; //this.metadata.modelName
 		const raw = Array.isArray(prompts) ? prompts[0] : prompts;
 		this.input =
 			typeof raw === 'string' ? raw.replace(/^Human:\s*/, '') : (raw as any)?.text || String(raw);
 
 		const workflowSlug = slugifyWorkflowName(this.metadata.workflowName);
-		this.logger.log('[WatsonX-Langfuse] Creating trace...');
+		this.logger.debug(`[${LOG_NAME}] Creating trace...`);
 		this.trace = this.langfuse.trace({
-			name: `langfuse-test-${workflowSlug}-trace`,
+			name: `trace-test-${workflowSlug}`,
 			userId: 'n8n-watsonx-llmx-test',
 		});
-		this.logger.log('[WatsonX-Langfuse] Creating span...');
-		this.span = this.trace.span({ name: `langfuse-${workflowSlug}-inference` });
+		this.logger.debug(`[${LOG_NAME}] Creating span...`);
+		this.span = this.trace.span({ name: `span-llm-${workflowSlug}` });
 
-		this.logger.log('[WatsonX-Langfuse] Updating trace and span with input and metadata...');
+		this.logger.debug(`[${LOG_NAME}] Updating trace and span with input and metadata...`);
 		await this.trace.update({
 			input: this.input,
 			metadata: { step: 'started', startTime: this.startTime, ...this.metadata },
@@ -103,7 +105,7 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
 		this.endTime = Date.now();
 		//const modelRunTime = this.startTime ? this.endTime - this.startTime : 0;
 
-		this.logger.log('[WatsonX-Langfuse] Updating trace and span with output and metadata...');
+		this.logger.debug(`[${LOG_NAME}] Updating trace and span with output and metadata...`);
 		await this.trace?.update({
 			output: text,
 			metadata: {
@@ -128,7 +130,7 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
 			},
 		});
 
-		await langfuseEnd(this.langfuse, this.span as LangfuseSpanClient, this.logger);
+		await langfuseEnd(this.logger, LOG_NAME, this.langfuse, [this.span as LangfuseSpanClient]);
 	}
 
 	async handleLLMError(error: IDataObject | Error) {
@@ -147,9 +149,9 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
 		this.endTime = Date.now();
 		//const modelRunTime = this.startTime ? this.endTime - this.startTime : 0;
 
-		this.logger.log('[WatsonX-Langfuse] Updating trace and span with LLM error...');
+		this.logger.debug('[WatsonX-Langfuse] Updating trace and span with LLM error...');
 		await this.trace?.update({
-			output: `[WatsonX-Langfuse] Error: ${error.message}`,
+			output: `[${LOG_NAME}] Error: ${error.message}`,
 			metadata: {
 				step: 'error',
 				endTime: this.endTime,
@@ -158,7 +160,7 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
 		});
 
 		await this.span?.update({
-			output: `[WatsonX-Langfuse] Error: ${error.message}`,
+			output: `[${LOG_NAME}] Error: ${error.message}`,
 			metadata: {
 				step: 'error',
 				endTime: this.endTime,
@@ -166,6 +168,6 @@ export class N8nLangfuseHandler extends BaseCallbackHandler {
 			},
 		});
 
-		await langfuseEnd(this.langfuse, this.span as LangfuseSpanClient, this.logger);
+		await langfuseEnd(this.logger, LOG_NAME, this.langfuse, [this.span as LangfuseSpanClient]);
 	}
 }
