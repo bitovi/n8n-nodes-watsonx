@@ -16,9 +16,10 @@ import { watsonxDescription, watsonxModel, watsonxVersion } from '../llms/Watson
 interface IWatsonxOptions {
 	temperature?: number;
 	maxTokens?: number;
-	topK?: number;
 	topP?: number;
 }
+
+
 export class LmChatWatsonX implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'WatsonX LLM',
@@ -64,15 +65,6 @@ export class LmChatWatsonX implements INodeType {
 							'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
 					},
 					{
-						displayName: 'Top K',
-						name: 'topK',
-						type: 'number',
-						default: 50,
-						typeOptions: { minValue: 1, maxValue: 100 },
-						description:
-							'The number of highest probability vocabulary tokens to keep for top-k-filtering',
-					},
-					{
 						displayName: 'Top P',
 						name: 'topP',
 						type: 'number',
@@ -86,11 +78,25 @@ export class LmChatWatsonX implements INodeType {
 						name: 'outputFormat',
 						type: 'options',
 						options: [
-							{ name: 'Default', value: 'default' },
-							{ name: 'JSON', value: 'json' },
+							{
+								name: 'Default',
+								value: 'default',
+								description: 'No JSON enforcement',
+							},
+							{
+								name: 'JSON Mode with Prompt Injection',
+								value: 'json_with_prompt',
+								description: 'Enables native JSON output and adds an instruction to the prompt to ensure reliability (Recommended)',
+							},
+							{
+								name: 'JSON Mode Only (No Prompt Injection)',
+								value: 'json_only',
+								description: 'Enables native JSON output without modifying the prompt (Advanced)',
+							},
 						],
 						default: 'default',
-						description: 'Specifies the format of the API response',
+						description: 'Configures the model for JSON output. WARNING: If not using "JSON with Prompt Injection" option, ' +
+							'ensure system/user prompt informs AI to use JSON if not the AI may generate infinite new line tokens.',
 					},
 				],
 			},
@@ -181,7 +187,6 @@ export class LmChatWatsonX implements INodeType {
 			model: modelId,
 			version: this.getNodeParameter('version', itemIndex),
 			projectId: credentials.projectId,
-			stream: false,
 			...options,
 			callbacks,
 			onFailedAttempt: makeN8nLlmFailedAttemptHandler(this),
@@ -189,8 +194,6 @@ export class LmChatWatsonX implements INodeType {
 		const outputFormat = props.outputFormat;
 		delete props.outputFormat;
 
-		// This property is not used by the constructor, so we can clean it up
-		delete props.stream;
 		if (credentials.environmentType === 'iam') {
 			const region = credentials.ibmCloudRegion;
 			props.watsonxAIAuthType = 'iam';
@@ -223,11 +226,72 @@ export class LmChatWatsonX implements INodeType {
 			props,
 		);
 		let model: any = new ChatWatsonx(props);
-		if (outputFormat === 'json') {
+
+
+		// The entire purpose of this section is to enforce JSON output format.
+		if (outputFormat === 'json_with_prompt' || outputFormat === 'json_only') {
 			this.logger.debug('Applying native JSON mode via .withConfig()');
 			model = model.withConfig({
 				responseFormat: { type: 'json_object' },
 			});
+			// This rest of this code will append the JSON instruction to the prompt to comply with IBM documentation.
+			// It can work without this code; however, this ensures that the instruction is always applied when using
+			// the `json` output format. If not used may generate infinite /n tokens in the response.
+			if (outputFormat === 'json_with_prompt') {
+				this.logger.debug('Wrapping model with a Proxy to enforce JSON instruction in the prompt.');
+
+				const jsonInstruction =
+					'\n\nIMPORTANT: Your final output must be a single, valid JSON object and nothing else. Do not include any text, explanations, or markdown formatting before or after the JSON object.';
+
+				const handler = {
+					get: (target: any, prop: string | symbol, receiver: any) => {
+						if (prop === 'invoke' || prop === 'stream') {
+							const originalMethod = target[prop];
+
+							return async (input: any, options: any) => {
+								this.logger.debug(`[Proxy] Wrapped '${String(prop)}' has been called.`);
+								this.logger.debug(`[Proxy] Input content: ${JSON.stringify(input, null, 2)}`);
+
+								let modifiedInput = input;
+
+								// DUCK-TYPING: Check for the structure of a PromptValue-like object
+								if (
+									typeof input === 'object' &&
+									input !== null &&
+									typeof input.value === 'string' &&
+									typeof input.toChatMessages === 'function'
+								) {
+									this.logger.debug('[Proxy] Detected PromptValue-like object. Re-instantiating with modified value.');
+
+									modifiedInput = new input.constructor(input.value + jsonInstruction);
+
+									this.logger.debug(`[Proxy] Final prompt being sent to model: ${JSON.stringify(modifiedInput)}`);
+								} else if (Array.isArray(input)) {
+									const messages = [...input];
+									if (messages.length > 0) {
+										const lastMessage = messages[messages.length - 1];
+										if (lastMessage && typeof lastMessage.content === 'string') {
+											lastMessage.content += jsonInstruction;
+											modifiedInput = messages;
+										}
+									}
+								} else if (typeof input === 'string') {
+									this.logger.debug('[Proxy] Input is a string. Appending JSON instruction.');
+									modifiedInput = input + jsonInstruction;
+								} else {
+									this.logger.warn('[Proxy] Input was not a recognized type. Passing through without modification.');
+								}
+
+								return originalMethod.call(target, modifiedInput, options);
+							};
+						}
+
+						return Reflect.get(target, prop, receiver);
+					},
+				};
+
+				model = new Proxy(model, handler);
+			}
 		}
 
 		return { response: model };
