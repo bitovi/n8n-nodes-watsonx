@@ -58,7 +58,10 @@
   },
   "dependencies": {
     "@langchain/community": "^0.3.45",
+    "@langchain/core": "^0.3.62",
+    "langchain": "^0.3.29",
     "langfuse": "^3.37.4",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "zod": "^3.25.76"
   }
 }
