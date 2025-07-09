@@ -66,7 +66,7 @@ export class LmChatWatsonX implements INodeType {
 						displayName: 'Maximum Number of Tokens',
 						name: 'maxTokens',
 						type: 'number',
-						default: 1024,
+						default: 128000,
 						typeOptions: { minValue: 1 },
 						description: 'The maximum number of *new* tokens to generate in the completion',
 					},
