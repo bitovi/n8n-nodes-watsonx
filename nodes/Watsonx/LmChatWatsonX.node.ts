@@ -11,6 +11,12 @@ import { N8nLlmTracing } from './depedancies/N8nLlmTracing';
 import { N8nLangfuseHandler } from './depedancies/N8nLangfuseHandler';
 import { makeN8nLlmFailedAttemptHandler } from './depedancies/n8nLlmFailedAttemptHandler';
 import { ChatWatsonx } from '@langchain/community/chat_models/ibm';
+import {
+	watsonxDescription,
+	watsonxModel,
+	watsonxVersion,
+	watsonxOptions,
+} from '../llms/WatsonX/description';
 
 interface IWatsonxOptions {
 	temperature?: number;
@@ -27,89 +33,13 @@ export class LmChatWatsonX implements INodeType {
 		version: 1.0,
 		description: 'For advanced usage with an AI chain and tracked via Langfuse',
 		defaults: { name: 'WatsonX LLM' },
-		// eslint-disable-next-line n8n-nodes-base/node-class-description-inputs-wrong-regular-node
 		inputs: [],
-		// eslint-disable-next-line n8n-nodes-base/node-class-description-outputs-wrong
 		outputs: [NodeConnectionTypes.AiLanguageModel],
 		outputNames: ['Model'],
-		credentials: [{ name: 'watsonxApi', required: true }],
-		properties: [
-			{
-				displayName: 'Model Name or ID',
-				name: 'modelId',
-				type: 'options',
-				default: '',
-				required: true,
-				description:
-					'Choose one of the foundation or custom models available to your account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
-				typeOptions: {
-					loadOptionsMethod: 'getAvailableModels',
-				},
-			},
-			{
-				displayName: 'API Version',
-				name: 'version',
-				type: 'string',
-				default: '2024-05-31',
-				required: true,
-			},
-			{
-				displayName: 'Options',
-				name: 'options',
-				type: 'collection',
-				placeholder: 'Add Option',
-				default: {},
-				description: "Additional options to control the model's behavior",
-				options: [
-					{
-						displayName: 'Maximum Number of Tokens',
-						name: 'maxTokens',
-						type: 'number',
-						default: 1024,
-						typeOptions: { minValue: 1 },
-						description: 'The maximum number of *new* tokens to generate in the completion',
-					},
-					{
-						displayName: 'Sampling Temperature',
-						name: 'temperature',
-						type: 'number',
-						default: 0.7,
-						typeOptions: { minValue: 0, maxValue: 2, numberPrecision: 1 },
-						description:
-							'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
-					},
-					{
-						displayName: 'Top K',
-						name: 'topK',
-						type: 'number',
-						default: 50,
-						typeOptions: { minValue: 1, maxValue: 100 },
-						description:
-							'The number of highest probability vocabulary tokens to keep for top-k-filtering',
-					},
-					{
-						displayName: 'Top P',
-						name: 'topP',
-						type: 'number',
-						default: 1,
-						typeOptions: { minValue: 0, maxValue: 1, numberPrecision: 1 },
-						description:
-							'Controls diversity via nucleus sampling: 0.5 means half of all likelihood-weighted options are considered',
-					},
-					{
-						displayName: 'Output Format',
-						name: 'outputFormat',
-						type: 'options',options: [
-				{ name: 'Default', value: 'default' },
-				{ name: 'JSON', value: 'json' },
-			],
-			default: 'default',
-			description: 'Specifies the format of the API response',
-					},
-
-				],
-			},
-		],
+		// Use shared WatsonX description fields
+		credentials: watsonxDescription.credentials,
+		requestDefaults: watsonxDescription.requestDefaults,
+		properties: [watsonxModel, watsonxVersion, watsonxOptions],
 	};
 
 	methods = {
@@ -202,10 +132,10 @@ export class LmChatWatsonX implements INodeType {
 			onFailedAttempt: makeN8nLlmFailedAttemptHandler(this),
 		};
 		const outputFormat = props.outputFormat;
-    delete props.outputFormat;
+		delete props.outputFormat;
 
-    // This property is not used by the constructor, so we can clean it up
-    delete props.stream;
+		// This property is not used by the constructor, so we can clean it up
+		delete props.stream;
 		if (credentials.environmentType === 'iam') {
 			const region = credentials.ibmCloudRegion;
 			props.watsonxAIAuthType = 'iam';
@@ -233,14 +163,17 @@ export class LmChatWatsonX implements INodeType {
 			props.serviceUrl = baseUrl;
 		}
 
-		this.logger.debug('--------------------------------------------------------------------------------------Initializing ChatWatsonx with props:', props);
+		this.logger.debug(
+			'--------------------------------------------------------------------------------------Initializing ChatWatsonx with props:',
+			props,
+		);
 		let model: any = new ChatWatsonx(props);
 		if (outputFormat === 'json') {
-        this.logger.debug('Applying native JSON mode via .withConfig()');
-        model = model.withConfig({
-            responseFormat: { type: 'json_object' },
-        });
-    }
+			this.logger.debug('Applying native JSON mode via .withConfig()');
+			model = model.withConfig({
+				responseFormat: { type: 'json_object' },
+			});
+		}
 
 		return { response: model };
 	}
