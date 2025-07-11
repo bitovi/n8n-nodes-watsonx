@@ -25,6 +25,17 @@ export class EmbeddingsWatsonX implements INodeType {
 		defaults: {
 			name: 'Embeddings WatsonX',
 		},
+
+	credentials: [
+		{
+			name: 'watsonxApi',
+			required: true,
+		},
+	],
+	requestDefaults: {
+		ignoreHttpStatusErrors: true,
+		baseURL: '={{ $credentials.baseUrl.replace(new RegExp("/$"), "") }}',
+	},
 		//...ollamaDescription,
 		codex: {
 			categories: ['AI'],
@@ -59,10 +70,11 @@ export class EmbeddingsWatsonX implements INodeType {
 		const region = credentials.ibmCloudRegion;
 
 		const embeddings = new WatsonxEmbeddings({
-			projectId: credentials.projectId,
+			projectId: credentials.projectId as string,
+			model: modelName,
 			version: apiVersion,
 			watsonxAIAuthType: 'iam',
-			watsonxAIApikey: credentials.ibmCloudApiKey,
+			watsonxAIApikey: credentials.ibmCloudApiKey as string,
 			serviceUrl: `https://${region}.ml.cloud.ibm.com`,
 		});
 
