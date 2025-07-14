@@ -17,7 +17,7 @@ import {
 	watsonxModel,
 	watsonxVersion,
 	watsonxOptions,
-} from '../../llms/WatsonX/description';
+} from '../llms/WatsonX/description';
 
 export class EmbeddingsWatsonX implements INodeType {
 	description: INodeTypeDescription = {
