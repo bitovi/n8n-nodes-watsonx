@@ -51,7 +51,7 @@ export class LmChatWatsonX implements INodeType {
 						displayName: 'Maximum Number of Tokens',
 						name: 'maxTokens',
 						type: 'number',
-						default: 128000,
+						default: 1024,
 						typeOptions: { minValue: 1 },
 						description: 'The maximum number of *new* tokens to generate in the completion',
 					},
@@ -193,6 +193,9 @@ export class LmChatWatsonX implements INodeType {
 		};
 		const outputFormat = props.outputFormat;
 		delete props.outputFormat;
+
+		// This property is not used by the constructor, so we can clean it up
+		delete props.stream;
 
 		if (credentials.environmentType === 'iam') {
 			const region = credentials.ibmCloudRegion;
