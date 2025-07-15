@@ -11,6 +11,7 @@ import { N8nLlmTracing } from './depedancies/N8nLlmTracing';
 import { N8nLangfuseHandler } from './depedancies/N8nLangfuseHandler';
 import { makeN8nLlmFailedAttemptHandler } from './depedancies/n8nLlmFailedAttemptHandler';
 import { ChatWatsonx } from '@langchain/community/chat_models/ibm';
+import { watsonxDescription, watsonxModel, watsonxVersion } from '../llms/WatsonX/description';
 
 interface IWatsonxOptions {
 	temperature?: number;
@@ -28,45 +29,29 @@ export class LmChatWatsonX implements INodeType {
 		version: 1.0,
 		description: 'For advanced usage with an AI chain and tracked via Langfuse',
 		defaults: { name: 'WatsonX LLM' },
-		// eslint-disable-next-line n8n-nodes-base/node-class-description-inputs-wrong-regular-node
 		inputs: [],
-		// eslint-disable-next-line n8n-nodes-base/node-class-description-outputs-wrong
 		outputs: [NodeConnectionTypes.AiLanguageModel],
 		outputNames: ['Model'],
-		credentials: [{ name: 'watsonxApi', required: true }],
+		// Use shared WatsonX description fields
+		credentials: watsonxDescription.credentials,
+		requestDefaults: watsonxDescription.requestDefaults,
 		properties: [
-			{
-				displayName: 'Model Name or ID',
-				name: 'modelId',
-				type: 'options',
-				default: '',
-				required: true,
-				description:
-					'Choose one of the foundation or custom models available to your account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
-				typeOptions: {
-					loadOptionsMethod: 'getAvailableModels',
-				},
-			},
-			{
-				displayName: 'API Version',
-				name: 'version',
-				type: 'string',
-				default: '2024-05-31',
-				required: true,
-			},
+			watsonxModel,
+			watsonxVersion,
+
 			{
 				displayName: 'Options',
 				name: 'options',
-				type: 'collection',
 				placeholder: 'Add Option',
-				default: {},
 				description: "Additional options to control the model's behavior",
+				type: 'collection',
+				default: {},
 				options: [
 					{
 						displayName: 'Maximum Number of Tokens',
 						name: 'maxTokens',
 						type: 'number',
-						default: 128000,
+						default: 1024,
 						typeOptions: { minValue: 1 },
 						description: 'The maximum number of *new* tokens to generate in the completion',
 					},
@@ -113,7 +98,6 @@ export class LmChatWatsonX implements INodeType {
 						description: 'Configures the model for JSON output. WARNING: If not using "JSON with Prompt Injection" option, ' +
 							'ensure system/user prompt informs AI to use JSON if not the AI may generate infinite new line tokens.',
 					},
-
 				],
 			},
 		],
@@ -208,7 +192,10 @@ export class LmChatWatsonX implements INodeType {
 			onFailedAttempt: makeN8nLlmFailedAttemptHandler(this),
 		};
 		const outputFormat = props.outputFormat;
-    delete props.outputFormat;
+		delete props.outputFormat;
+
+		// This property is not used by the constructor, so we can clean it up
+		delete props.stream;
 
 		if (credentials.environmentType === 'iam') {
 			const region = credentials.ibmCloudRegion;
@@ -237,7 +224,10 @@ export class LmChatWatsonX implements INodeType {
 			props.serviceUrl = baseUrl;
 		}
 
-		this.logger.debug('--------------------------------------------------------------------------------------Initializing ChatWatsonx with props:', props);
+		this.logger.debug(
+			'--------------------------------------------------------------------------------------Initializing ChatWatsonx with props:',
+			props,
+		);
 		let model: any = new ChatWatsonx(props);
 
 
