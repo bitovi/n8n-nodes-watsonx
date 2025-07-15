@@ -12,12 +12,7 @@ import {
 } from 'n8n-workflow';
 
 import { getConnectionHintNoticeField } from './dependencies/sharedFields';
-import {
-	watsonxDescription,
-	watsonxModel,
-	watsonxVersion,
-	watsonxOptions,
-} from '../llms/WatsonX/description';
+import { watsonxDescription, watsonxModel, watsonxVersion } from '../llms/WatsonX/description';
 
 export class EmbeddingsWatsonX implements INodeType {
 	description: INodeTypeDescription = {
@@ -46,7 +41,6 @@ export class EmbeddingsWatsonX implements INodeType {
 			getConnectionHintNoticeField([NodeConnectionTypes.AiVectorStore]),
 			watsonxModel,
 			watsonxVersion,
-			watsonxOptions,
 		],
 	};
 	methods = {
