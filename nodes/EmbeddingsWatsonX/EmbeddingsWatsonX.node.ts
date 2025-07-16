@@ -95,19 +95,44 @@ export class EmbeddingsWatsonX implements INodeType {
 	async supplyData(this: ISupplyDataFunctions, itemIndex: number): Promise<SupplyData> {
 		this.logger.debug('Supply data for embeddings WatsonX');
 		const modelName = this.getNodeParameter('modelId', itemIndex) as string;
-
 		const credentials = await this.getCredentials('watsonxApi', itemIndex);
 		const apiVersion = this.getNodeParameter('version', itemIndex) as string;
-		const region = credentials.ibmCloudRegion;
 
-		const embeddings = new WatsonxEmbeddings({
-			projectId: credentials.projectId as string,
-			model: modelName,
-			version: apiVersion,
-			watsonxAIAuthType: 'iam',
-			watsonxAIApikey: credentials.ibmCloudApiKey as string,
-			serviceUrl: `https://${region}.ml.cloud.ibm.com`,
-		});
+		let embeddings;
+		if (credentials.environmentType === 'iam') {
+			const region = credentials.ibmCloudRegion;
+			embeddings = new WatsonxEmbeddings({
+				projectId: credentials.projectId as string,
+				model: modelName,
+				version: apiVersion,
+				watsonxAIAuthType: 'iam',
+				watsonxAIApikey: credentials.ibmCloudApiKey as string,
+				serviceUrl: `https://${region}.ml.cloud.ibm.com`,
+			});
+		} else {
+			// On-premise/CP4D: exchange username/apiKey for bearer token
+			const baseUrl = (credentials.onPremiseUrl as string).replace(/\/$/, '');
+			const authUrl = `${baseUrl}/icp4d-api/v1/authorize`;
+			const authResponse = await this.helpers.httpRequest({
+				method: 'POST',
+				url: authUrl,
+				body: {
+					username: credentials.username,
+					api_key: credentials.apiKey,
+				},
+				json: true,
+			});
+			const accessToken = authResponse.token;
+			embeddings = new WatsonxEmbeddings({
+				projectId: credentials.projectId as string,
+				model: modelName,
+				version: apiVersion,
+				watsonxAIAuthType: 'bearertoken',
+				watsonxAIUsername: credentials.username as string,
+				watsonxAIBearerToken: accessToken,
+				serviceUrl: baseUrl,
+			});
+		}
 
 		return {
 			response: embeddings,
