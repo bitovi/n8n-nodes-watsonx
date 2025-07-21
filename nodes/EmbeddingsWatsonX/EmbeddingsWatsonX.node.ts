@@ -98,17 +98,28 @@ export class EmbeddingsWatsonX implements INodeType {
 		const credentials = await this.getCredentials('watsonxApi', itemIndex);
 		const apiVersion = this.getNodeParameter('version', itemIndex) as string;
 
-		let embeddings;
+		// Prepare callbacks and onFailedAttempt if supported (for parity)
+		//const callbacks: any[] = [];
+		// If you have tracing or error handling for embeddings, add here
+		// Example: callbacks.push(new N8nLlmTracing(this));
+		// const onFailedAttempt = makeN8nLlmFailedAttemptHandler?.(this);
+
+		let props: any = {
+			projectId: credentials.projectId as string,
+			model: modelName,
+			version: apiVersion,
+			// callbacks, // Uncomment if WatsonxEmbeddings supports callbacks
+			// onFailedAttempt, // Uncomment if WatsonxEmbeddings supports onFailedAttempt
+		};
+
 		if (credentials.environmentType === 'iam') {
 			const region = credentials.ibmCloudRegion;
-			embeddings = new WatsonxEmbeddings({
-				projectId: credentials.projectId as string,
-				model: modelName,
-				version: apiVersion,
+			props = {
+				...props,
 				watsonxAIAuthType: 'iam',
 				watsonxAIApikey: credentials.ibmCloudApiKey as string,
 				serviceUrl: `https://${region}.ml.cloud.ibm.com`,
-			});
+			};
 		} else {
 			// On-premise/CP4D: exchange username/apiKey for bearer token
 			const baseUrl = (credentials.onPremiseUrl as string).replace(/\/$/, '');
@@ -123,16 +134,20 @@ export class EmbeddingsWatsonX implements INodeType {
 				json: true,
 			});
 			const accessToken = authResponse.token;
-			embeddings = new WatsonxEmbeddings({
-				projectId: credentials.projectId as string,
-				model: modelName,
-				version: apiVersion,
+			props = {
+				...props,
 				watsonxAIAuthType: 'bearertoken',
 				watsonxAIUsername: credentials.username as string,
 				watsonxAIBearerToken: accessToken,
 				serviceUrl: baseUrl,
-			});
+			};
 		}
+
+		this.logger.debug(
+			'--------------------------------------------------------------------------------------Initializing EmbeddingsWatsonX with props:',
+			props,
+		);
+		const embeddings = new WatsonxEmbeddings({ ...props });
 
 		return {
 			response: embeddings,
