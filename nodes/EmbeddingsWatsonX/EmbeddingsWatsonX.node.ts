@@ -31,7 +31,9 @@ export class EmbeddingsWatsonX implements INodeType {
 				AI: ['Embeddings'],
 			},
 		},
+		// eslint-disable-next-line n8n-nodes-base/node-class-description-inputs-wrong-regular-node
 		inputs: [],
+		// eslint-disable-next-line n8n-nodes-base/node-class-description-outputs-wrong
 		outputs: [NodeConnectionTypes.AiEmbedding],
 		outputNames: ['Embeddings'],
 		// Use shared WatsonX description fields

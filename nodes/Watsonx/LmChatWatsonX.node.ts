@@ -29,7 +29,9 @@ export class LmChatWatsonX implements INodeType {
 		version: 1.0,
 		description: 'For advanced usage with an AI chain and tracked via Langfuse',
 		defaults: { name: 'WatsonX LLM' },
+		// eslint-disable-next-line n8n-nodes-base/node-class-description-inputs-wrong-regular-node
 		inputs: [],
+		// eslint-disable-next-line n8n-nodes-base/node-class-description-outputs-wrong
 		outputs: [NodeConnectionTypes.AiLanguageModel],
 		outputNames: ['Model'],
 		// Use shared WatsonX description fields
