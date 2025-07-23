@@ -77,7 +77,9 @@ function getInputs(hasOutputParser?: boolean): Array<NodeConnectionType | INodeI
 					'@n8n/n8n-nodes-langchain.lmChatGoogleGemini',
 					'@n8n/n8n-nodes-langchain.lmChatDeepSeek',
 					'@n8n/n8n-nodes-langchain.lmChatOpenRouter',
+					// Support WatsonX via custom extension
 					'CUSTOM.lmChatWatsonX',
+					'@bitovi/n8n-nodes-watsonx.lmChatWatsonX'
 				],
 			},
 		},
