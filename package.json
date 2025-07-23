@@ -1,6 +1,6 @@
 {
   "name": "@bitovi/n8n-nodes-watsonx",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "N8N node to connect to WatsonX",
   "keywords": [
     "n8n-community-node-package"
@@ -40,7 +40,8 @@
     ],
     "nodes": [
       "dist/nodes/Watsonx/LmChatWatsonX.node.js",
-      "dist/nodes/AgentV2custom/AgentV2custom.node.js"
+      "dist/nodes/AgentV2custom/AgentV2custom.node.js",
+      "dist/nodes/EmbeddingsWatsonX/EmbeddingsWatsonX.node.js"
     ]
   },
   "devDependencies": {
