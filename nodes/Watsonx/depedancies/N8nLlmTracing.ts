@@ -13,7 +13,7 @@ import pick from 'lodash/pick';
 import type { IDataObject, ISupplyDataFunctions, JsonObject } from 'n8n-workflow';
 import { NodeConnectionTypes, NodeError, NodeOperationError } from 'n8n-workflow';
 
-import { logAiEvent } from '../../AgentV2custom/dependancies/utils/helpers';
+import { logAiEvent } from '../../AgentV2custom/dependencies/utils/helpers';
 
 type TokensUsageParser = (llmOutput: LLMResult['llmOutput']) => {
 	completionTokens: number;

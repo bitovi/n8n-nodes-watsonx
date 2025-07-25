@@ -1,6 +1,6 @@
 {
   "name": "@bitovi/n8n-nodes-watsonx",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "N8N node to connect to WatsonX",
   "keywords": [
     "n8n-community-node-package"
