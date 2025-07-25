@@ -15,10 +15,10 @@ import {
 	promptTypeOptions,
 	textFromPreviousNode,
 	textInput,
-} from './dependancies/utils/descriptions';
+} from './dependencies/utils/descriptions';
 
-import { toolsAgentProperties } from './dependancies/agent/description';
-import { toolsAgentExecute } from './dependancies/agent/execute';
+import { toolsAgentProperties } from './dependencies/agent/description';
+import { toolsAgentExecute } from './dependencies/agent/execute';
 
 function getInputs(hasOutputParser?: boolean): Array<NodeConnectionType | INodeInputConfiguration> {
 	interface SpecialInput {
