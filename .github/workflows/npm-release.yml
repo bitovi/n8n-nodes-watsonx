@@ -1,0 +1,43 @@
+name: Release
+
+# Publishes your package to npm via the org's reusable workflow.
+# How it works: this job uploads a STAGED release using OIDC (no tokens, no secrets).
+# Nothing goes live until a maintainer approves it with 2FA at npmjs.com
+# (or `npm stage approve`). See https://docs.npmjs.com/staged-publishing
+#
+# Requirements: staged publishing needs npm CLI 11.15.0 or later and Node 22.14.0
+# or higher. The reusable workflow handles both for you (it upgrades npm and
+# defaults Node to 22.14.0) — only set `node-version` below if you need a newer one.
+#
+# BEFORE THIS WORKS — one-time setup per package on npmjs.com:
+#   1. The package must ALREADY EXIST on npm. Staged publishing can't do the
+#      first-ever publish — run `npm publish` manually once, then use this.
+#   2. Configure a Trusted Publisher for the package
+#      (npmjs.com → package Settings → Trusted Publisher → GitHub Actions).
+#      Use the repository you committed this file to and the filename
+#      of THIS file — NOT bitovi/.github and NOT npm-stage-publish.yml. npm
+#      authorizes the workflow that STARTS the run, not the reusable one it calls.
+#      Fields are case-sensitive and must match exactly (incl. the .yml extension);
+#      if you rename this file, update npm too.  https://docs.npmjs.com/trusted-publishers
+#
+# THEN: push a `v*` tag. Defaults publish a PUBLIC package from the repo root.
+# Change anything by uncommenting a line in the `with:` block below.
+
+on:
+  push:
+    tags: ["v*"]        # triggers when you push a version tag, e.g. v1.2.3
+  workflow_dispatch: 
+
+jobs:
+  stage:
+    # @main tracks the latest. For stability, pin to a release tag, e.g. ...@v1
+    uses: bitovi/.github/.github/workflows/npm-stage-publish.yml@main
+    permissions:
+      contents: read
+      id-token: write    # REQUIRED for OIDC publishing — do not remove
+    # --- Optional settings: uncomment ONLY the lines you want to change ---
+    # with:
+    #   access: restricted                   # use for a private/paid package (default: public)
+    #   dist-tag: next                       # publish under this tag instead of "latest"
+    #   node-version: "22.14.0"              # change the Node version used to publish
+    #   working-directory: packages/my-pkg   # set if your package is NOT at the repo root
