@@ -1,9 +1,9 @@
-import { DynamicStructuredTool } from 'langchain/tools';
+import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
 
 import type { ChatPromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
-import { AgentExecutor, createToolCallingAgent } from 'langchain/agents';
+import { AgentExecutor, createToolCallingAgent } from '@langchain/classic/agents';
 import omit from 'lodash/omit';
 import { jsonParse, NodeOperationError, sleep } from 'n8n-workflow';
 import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
@@ -58,7 +58,7 @@ export async function toolsAgentExecute(this: IExecuteFunctions): Promise<INodeE
 						),
 				}),
 				/*  Must return stringified JSON so jsonParse() works later on  */
-				func: async (input) => JSON.stringify(input),
+				func: async (input: { output?: unknown }) => JSON.stringify(input),
 			}),
 		);
 	}

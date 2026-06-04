@@ -1,6 +1,6 @@
 {
   "name": "@bitovi/n8n-nodes-watsonx",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "description": "N8N node to connect to WatsonX",
   "keywords": [
     "n8n-community-node-package"
@@ -58,11 +58,13 @@
     "n8n-workflow": "^1.94.0"
   },
   "dependencies": {
-    "@langchain/community": "^0.3.45",
-    "@langchain/core": "^0.3.62",
-    "langchain": "^0.3.29",
+    "@ibm-cloud/watsonx-ai": "^1.7.0",
+    "@langchain/classic": "^1.0.34",
+    "@langchain/community": "^1.1.27",
+    "@langchain/core": "^1.1.41",
+    "langchain": "^1.2.30",
     "langfuse": "^3.37.4",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "zod": "^3.25.76"
   }
 }

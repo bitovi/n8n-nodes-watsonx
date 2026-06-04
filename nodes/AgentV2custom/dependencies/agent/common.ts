@@ -2,10 +2,9 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { HumanMessage } from '@langchain/core/messages';
 import type { BaseMessage } from '@langchain/core/messages';
 import { ChatPromptTemplate, type BaseMessagePromptTemplateLike } from '@langchain/core/prompts';
-import type { AgentAction, AgentFinish } from 'langchain/agents';
-import type { ToolsAgentAction } from 'langchain/dist/agents/tool_calling/output_parser';
-import type { BaseChatMemory } from 'langchain/memory';
-import { DynamicStructuredTool, type Tool } from 'langchain/tools';
+import type { AgentAction, AgentFinish } from '@langchain/core/agents';
+import { DynamicStructuredTool, type Tool } from '@langchain/core/tools';
+import type { BaseChatMemory } from '@langchain/classic/memory';
 import { BINARY_ENCODING, jsonParse, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 import type { IExecuteFunctions } from 'n8n-workflow';
 import type { ZodObject } from 'zod';
@@ -13,6 +12,12 @@ import { z } from 'zod';
 
 import { isChatInstance, getConnectedTools } from '../utils/helpers';
 import { type N8nOutputParser } from '../utils/N8nOutputParser';
+
+
+type ToolsAgentAction = AgentAction & {
+	messageLog?: BaseMessage[];
+};
+
 /* -----------------------------------------------------------
    Output Parser Helper
 ----------------------------------------------------------- */
